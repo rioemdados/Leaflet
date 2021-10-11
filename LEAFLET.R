@@ -45,3 +45,55 @@ mapa <- df %>%
                    fillOpacity = 0.3) #opacidade geral
 
 mapa
+
+
+# MAPA REELS -------------------------------------------------------------------------------------
+
+vec <- seq.Date(as.Date("2020-03-01"), to = as.Date("2021-09-01"), by = "21 days")
+vec <- as.character(vec)
+
+mapa <- df %>% 
+  
+  # Track the top 20 countries for each date
+  group_by(date) %>% 
+  
+  arrange(desc(confirmed)) %>% 
+  
+  filter(row_number() <= 50, 
+         date %in% vec) %>% 
+  
+  # Circle radius 
+  # Arbitrary scaling function for dramatic effect
+  mutate(rad = sqrt(confirmed/max(confirmed)) * 80) %>% 
+  
+  # Leaflet
+  leaflet(options = leafletOptions(minZoom = 2, maxZoom = 6, )) %>% 
+  
+  # Base map layer
+  # Lots of other options see https://rstudio.github.io/leaflet/basemaps.html
+  addProviderTiles(providers$Stamen.TonerLite,
+                   options = providerTileOptions(opacity = 0.8)) %>%
+  
+  addCircleMarkers(lng = ~Longitude, 
+                   lat = ~Latitude, 
+                   radius = ~rad, 
+                   popup = ~text,
+                   weight = 0.7,
+                   stroke = T, 
+                   color = "#000000",
+                   fillColor = "#525c63", 
+                   fillOpacity = 0.5, 
+                   group = ~date, 
+                   labelOptions = labelOptions(noHide = F)) %>% 
+  # Layer control
+  addLayersControl(
+    
+    # Using baseGroups adds radio buttons which makes it easier to switch
+    baseGroups = vec,
+    
+    # Using overlayGroups adds checkboxes        
+    # overlayGroups = vec
+    
+    options = layersControlOptions(collapsed = FALSE))
+
+mapa
